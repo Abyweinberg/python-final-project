@@ -133,3 +133,4 @@ dmypy.json
 .vscode/
 data.sqlite
 files/
+*.txt

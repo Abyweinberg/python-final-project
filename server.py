@@ -2,6 +2,7 @@
 
 import sqlite3
 import socket
+import _thread
 
 
 class Server:
@@ -37,15 +38,23 @@ class Server:
         # TODO Update db by id - must have the date
 
 
+# TODO Create multiple connection using threads
 if __name__ == '__main__':
-    my_server = Server('localhost', 12121)
-    # input('Waiting...')
-    conn, addr = my_server.accept_connection()
-    with conn:
-        print(f'Connected with {addr}')
-        while True:
-            data = conn.recv(1024)
-            print(f'Recived data: {data}')
-            if not data:
-                break
-            conn.sendall(data)
+    try:
+        my_server = Server('localhost', 12121)
+        # input('Waiting...')
+
+        conn, addr = my_server.accept_connection()
+        with conn:
+            print(f'Connected with {addr}')
+            while True:
+                data = conn.recv(1024)
+                print(f'Recived data: {data}')
+                if not data:
+                    break
+                conn.sendall(data)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print('The Server is shutting down')
+        my_server.__del__()
