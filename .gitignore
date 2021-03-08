@@ -134,3 +134,5 @@ dmypy.json
 data.sqlite
 files/
 *.txt
+.status1.txt.swp
+db_backup/
