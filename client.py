@@ -2,9 +2,7 @@
 
 from StatusFileHandler import StatusFileHandler
 import socket
-from os import path
 import time
-# from WatchStatusFile import *
 from watchdog.observers import Observer
 from WatchStatusFile import *
 
@@ -34,10 +32,12 @@ class Client:
     # Done this function send to the server the alarm status
     # TODO Server should reply !!
     def update_server(self):
-        msg = ' '.join(self.alarm_status)
-        self.socket.send(msg.encode())
+        data = ' '.join(self.alarm_status)
+        packet = {'data': data, 'command': 'update'}
+        res = self.socket.send(str(packet).encode())
         response = self.socket.recv(1024).decode()
-        print(response)
+        print(f'this is response: {response}')
+        print(f'this is res: {res.decode()}')
         return response
 
     # Done
@@ -46,6 +46,10 @@ class Client:
             alarm_status = f.read()
             alarm_status = alarm_status.split()
             return alarm_status  # this return something like ['2','0','0']
+
+    def get_alarm_status_from_db(self):
+        # msg = ''
+        pass
 
     # Done this function update the alarm_status, inside the object
     def update_alarm_status(self):
@@ -62,17 +66,6 @@ if __name__ == '__main__':
     # Create status file name with the Station ID
     file_name = 'status' + station_id + '.txt'
 
-    # Check if file exist else create itCreate
-    # if path.isfile(file_name):
-    #     print(
-    #         'Status File detected, if any alarm is not decleared the default is False!')
-    # else:
-    #     print("We detect status file doesn't exist, I will create it for you :-) ")
-    #     with open(file_name, 'w') as f:
-    #         f.write(f'{station_id} 0 0')
-    status_file_handler = StatusFileHandler(station_id)
-    status_file_handler.create_file()  # if not exist create else do nothing
-
     # Get Server IP and Port
     # server_ip = input('Server ip: ')
     # port = int(input('Port: '))
@@ -82,19 +75,27 @@ if __name__ == '__main__':
     # CREATE CLIENT OBJECT
     client_connection = Client(station_id, server_ip, port, file_name)
     print(f'New Client Started {client_connection}')
-    client_connection.socket.send(b'Last Version')
+    client_connection.socket.send(b'This was send from the client')
     client_connection.update_alarm_status()
 
+    # CREATE FILE HANDLER
+    status_file_handler = StatusFileHandler(station_id, client_connection)
+    status_file_handler.create_file()  # if not exist create else do nothing
+
     # CREATE EVENT HANDLER
-    event_handler = WatchStatusFile(station_id, file_name, client_connection, status_file_handler)
+    event_handler = WatchStatusFile(
+        station_id, file_name, client_connection, status_file_handler)
     observer = Observer()
     observer.schedule(event_handler, path='./', recursive=False)
     print('Monitorin Started')
     observer.start()
 
     try:
-        while(True):
+        while True:
             time.sleep(1)
+            recv = client_connection.socket.recv(1024)
+            if recv:
+                print(f'This msg comes from the server: {recv}')
     except KeyboardInterrupt:
         observer.stop()
         observer.join()

@@ -26,7 +26,7 @@ class Server:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((host, port))
         self.socket.listen()
-        print('Server Initializaded')
+        print(f'Server Initializaded and listen on {host}:{port}')
 
     def __del__(self):
         self.conn.close()  # Close sql
@@ -35,7 +35,7 @@ class Server:
     def accept_connection(self):
         (client_socket, client_addr) = self.socket.accept()
         print(
-            f'Accepted Connection from: {client_socket} with the addres: {client_addr}')
+            f'Accepted Connection from addres: {client_addr}')
         return client_socket, client_addr
 
     def update_db(self, id, alarm1, alarm2):
@@ -69,17 +69,23 @@ class Server:
 if __name__ == '__main__':
     try:
         my_server = Server('localhost', 12121)
-        my_server.get_db_status(2)
-        my_server.update_db(613, 1, 1)
-        my_server.get_db_status(613)
+        # my_server.get_db_status(2)
+        # my_server.update_db(613, 1, 1)
+        # my_server.get_db_status(613)
+        conn, addr = my_server.accept_connection()
 
         while True:
-            conn, addr = my_server.accept_connection()
-            recv = conn.recv(1024).decode()
-            print(f'Server get: {recv}')
-            # TODO send response to Client
-            if recv:
-                conn.send(b'Server Receive get msg')
+            data = conn.recv(1024)
+            print(f'this data is from client = {data}')
+            if data:
+                my_server.socket.send(b'got the info')
+
+        # while True:   
+        #     recv = conn.recv(1024).decode()
+        #     print(f'Server get this msg: {recv}')
+        #     # TODO send response to Client
+        #     if recv:
+        #         conn.send(b'Server Send from server.py')
 
     except KeyboardInterrupt:
         print('The Server is shutting down')
