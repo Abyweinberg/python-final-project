@@ -37,7 +37,7 @@ class Client:
         res = self.socket.send(str(packet).encode())
         response = self.socket.recv(1024).decode()
         print(f'this is response: {response}')
-        print(f'this is res: {res.decode()}')
+        print(f'this is res: {res}')
         return response
 
     # Done
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     # CREATE CLIENT OBJECT
     client_connection = Client(station_id, server_ip, port, file_name)
     print(f'New Client Started {client_connection}')
-    client_connection.socket.send(b'This was send from the client')
+    client_connection.socket.send('First check send from client to server'.encode())
     client_connection.update_alarm_status()
 
     # CREATE FILE HANDLER
@@ -87,15 +87,17 @@ if __name__ == '__main__':
         station_id, file_name, client_connection, status_file_handler)
     observer = Observer()
     observer.schedule(event_handler, path='./', recursive=False)
-    print('Monitorin Started')
+    print('WatchStatusFile Monitorin Started')
     observer.start()
 
     try:
+        pass
         while True:
-            time.sleep(1)
-            recv = client_connection.socket.recv(1024)
-            if recv:
-                print(f'This msg comes from the server: {recv}')
+            pass
+        #     recv = client_connection.socket.recv(1024)
+        #     if recv:
+        #         print(f'This msg comes from the server: {recv.decode()}')
+        #         client_connection.socket.send('root kibalti thanks server'.encode())
     except KeyboardInterrupt:
         observer.stop()
         observer.join()
