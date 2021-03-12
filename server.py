@@ -63,7 +63,7 @@ class Server:
         print(result)
         return result
 
-    def proccess_data_client(self, data):
+    def process_data_client(self, data):
         data = data.decode()
         try:
             data = ast.literal_eval(data)
