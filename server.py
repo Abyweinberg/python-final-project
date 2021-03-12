@@ -2,10 +2,9 @@
 
 import sqlite3
 import socket
-import _thread
 from sqlite3.dbapi2 import Cursor, threadsafety
-import threading
 import datetime
+import ast
 
 # TODO Create date in db!
 
@@ -48,7 +47,6 @@ class Server:
             self.conn.commit()
         except Exception as e:
             print(f'Exception: {e}')
-        # TODO Update db by id - must have the date
 
     def get_db_status(self, id):
         # TODO secure id
@@ -65,6 +63,19 @@ class Server:
         print(result)
         return result
 
+    def proccess_data_client(self, data):
+        data = data.decode()
+        try:
+            data = ast.literal_eval(data)
+            if data['command'] == 'update':
+                data = data['data'].split()
+                self.update_db(data[0], data[1], data[2])
+        # TODO Have to check wich execption could be
+        except (ValueError, AttributeError, SyntaxError) as err:
+            print(f'Exception {err}')
+            print(data)
+            pass
+
 
 if __name__ == '__main__':
     try:
@@ -76,11 +87,13 @@ if __name__ == '__main__':
 
         while True:
             data = conn.recv(1024)
-            print(f'this data is from client = {data}')
             if data:
-                my_server.socket.send(b'got the info')
+                # print(f'Information from {conn} = {data.decode()}')
+                # my_server.socket.send()
+                conn.send('Proccesing your request'.encode())
+                my_server.proccess_data_client(data)
 
-        # while True:   
+        # while True:
         #     recv = conn.recv(1024).decode()
         #     print(f'Server get this msg: {recv}')
         #     # TODO send response to Client
