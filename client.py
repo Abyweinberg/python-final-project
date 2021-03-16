@@ -28,7 +28,6 @@ class Client:
         packet = {'data': data, 'command': 'update'}
         self.socket.send(str(packet).encode())
         response = self.socket.recv(1024).decode()
-        print(f'Client id [{self.id}] - Server response: {response}')
         return response
 
     def get_alarm_status_from_file(self):
@@ -38,10 +37,9 @@ class Client:
             return alarm_status  # this return something like ['2','0','0']
 
     def get_alarm_status_from_db(self, id):
-        packet = {'data': f'{id}', 'command': 'retrive'}
+        packet = {'data': f'{id}', 'command': 'retrieve'}
         self.socket.send(str(packet).encode())
         response = self.socket.recv(1024).decode()
-        print(f'Client id [{self.id}] - Server response: {response}')
         return response
 
     def update_alarm_status(self):

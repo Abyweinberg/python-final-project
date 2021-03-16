@@ -3,7 +3,7 @@
 from os import path
 import ast
 
-
+# This class attempt to handle Static file modification and recover
 class StatusFileHandler:
 
     def __init__(self, station_id, client_connection) -> None:

@@ -32,7 +32,8 @@ class Server:
         self.conn.close()  # Close sql
         self.socket.close()  # Close Soket
 
-    def accept_connection(self):
+        # Accept connection from Clients 
+    def accept_connection(self): 
         (client_socket, client_addr) = self.socket.accept()
         print(
             f'[Server] - Accepted Connection: {client_addr}')
@@ -61,11 +62,14 @@ class Server:
                 "select * from station_status where station_id = ?", parameters)
             result = cur.fetchone()
             print(f'[Server] - Retriving alarm status to the Client id {id}')
-            # self.socket.send(str(result).encode())
+            print(f'Result: {result}')
             return result
         except Exception as e:
             print(f'Exception: {e}')
-
+        
+        # This Function procces the request of the client, 
+        # Update to change alarms status and retrieve for recover in the case
+        # the status file was removed.
     def process_data_client(self, data):
         data = data.decode()
         try:
@@ -73,7 +77,7 @@ class Server:
             if data['command'] == 'update':
                 data = data['data'].split()
                 self.update_db(data[0], data[1], data[2])
-            elif data['command'] == 'retrive':
+            elif data['command'] == 'retrieve':
                 data = data['data'].split()
                 return self.get_db_status(data[0])
         except (ValueError, AttributeError, SyntaxError) as err:
@@ -92,7 +96,7 @@ if __name__ == '__main__':
             for socket_readable in readable:
                 if socket_readable is my_server.socket:
                     connection, client_address = my_server.socket.accept()
-                    connection.setblocking(0)
+                    # connection.setblocking(0)
                     inputs_sockets.append(connection)
                 else:
                     try:

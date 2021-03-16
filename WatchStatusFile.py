@@ -4,7 +4,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.events import PatternMatchingEventHandler
 from StatusFileHandler import *
 
-
+# This class care to watch status file changes and trigger the necessary functions.
 class WatchStatusFile(FileSystemEventHandler):
 
     def __init__(self, station_id, file_name, client_connection, status_file_handler):
