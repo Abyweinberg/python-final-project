@@ -13,7 +13,10 @@ class Server:
 
     def __init__(self, host, port):
         # Init SQL
-        self.conn = sqlite3.connect("data.sqlite")
+        try:
+            self.conn = sqlite3.connect("data.sqlite")
+        except Exception as e:
+            print(f'Exception connection to the DB: {e}')
         cur = self.conn.cursor()
         cmd = """
         CREATE TABLE IF NOT EXISTS station_status (
@@ -22,9 +25,12 @@ class Server:
         self.conn.commit()
 
         # Init Socket
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((host, port))
-        self.socket.listen(10)
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.bind((host, port))
+            self.socket.listen(10)
+        except Exception as e:
+            print(f'Exception creating socket: {e}')
         print(f'[Server] - Initializaded and listen on {host}:{port}')
 
     def __del__(self):
@@ -96,7 +102,6 @@ if __name__ == '__main__':
             for socket_readable in readable:
                 if socket_readable is my_server.socket:
                     connection, client_address = my_server.socket.accept()
-                    # connection.setblocking(0)
                     inputs_sockets.append(connection)
                 else:
                     try:
