@@ -2,7 +2,6 @@
 
 from StatusFileHandler import StatusFileHandler
 import socket
-import time
 from watchdog.observers import Observer
 from WatchStatusFile import *
 
@@ -26,9 +25,13 @@ class Client:
     def update_server(self):
         data = ' '.join(self.alarm_status)
         packet = {'data': data, 'command': 'update'}
-        self.socket.send(str(packet).encode())
-        response = self.socket.recv(1024).decode()
-        return response
+        try:
+            self.socket.send(str(packet).encode())
+            response = self.socket.recv(1024).decode()
+            return response
+        except Exception as e:
+            print(f'Error updating Server: {e}')
+            return False
 
     def get_alarm_status_from_file(self):
         with open(self.alarm_status_file_name, 'r') as f:
@@ -38,9 +41,12 @@ class Client:
 
     def get_alarm_status_from_db(self, id):
         packet = {'data': f'{id}', 'command': 'retrieve'}
-        self.socket.send(str(packet).encode())
-        response = self.socket.recv(1024).decode()
-        return response
+        try:
+            self.socket.send(str(packet).encode())
+            return self.socket.recv(1024).decode()
+        except Exception as e:
+            print(f'Error getting alarm status: {e}')
+            return False
 
     def update_alarm_status(self):
         alarm_status = self.get_alarm_status_from_file()
@@ -52,20 +58,16 @@ if __name__ == '__main__':
     # GET USER INFORMATION
     # Initilize Station with id
     station_id = input('Please, Add the Station ID: ')
-    # station_id = '1'
     # Create status file name with the Station ID
     file_name = 'status' + station_id + '.txt'
 
     # Get Server IP and Port
-    # server_ip = input('Server ip: ')
-    # port = int(input('Port: '))
-    server_ip = 'localhost'
-    port = 12121
+    server_ip = input('Server ip: ')
+    port = int(input('Port: '))
 
     # CREATE CLIENT OBJECT
     client_connection = Client(station_id, server_ip, port, file_name)
     print(f'New Client id {station_id} Started {client_connection.socket}')
-    client_connection.socket.send(f'Checking client ID {station_id}'.encode())
 
     # CREATE FILE HANDLER
     status_file_handler = StatusFileHandler(station_id, client_connection)
