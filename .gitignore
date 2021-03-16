@@ -136,3 +136,6 @@ files/
 *.txt
 .status1.txt.swp
 db_backup/
+server2.py
+.status3.txt.swp
+.gitignore
