@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
+from client import Client
 import sqlite3
 import socket
-from sqlite3.dbapi2 import Cursor, threadsafety
+from sqlite3.dbapi2 import Cursor
 import datetime
 import ast
-
-# TODO Create date in db!
+import select
 
 
 class Server:
@@ -24,44 +24,47 @@ class Server:
         # Init Socket
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((host, port))
-        self.socket.listen()
-        print(f'Server Initializaded and listen on {host}:{port}')
+        self.socket.listen(10)
+        print(f'[Server] - Initializaded and listen on {host}:{port}')
 
     def __del__(self):
+        print('[Server] - Closing sql')
         self.conn.close()  # Close sql
         self.socket.close()  # Close Soket
 
     def accept_connection(self):
         (client_socket, client_addr) = self.socket.accept()
         print(
-            f'Accepted Connection from addres: {client_addr}')
+            f'[Server] - Accepted Connection: {client_addr}')
         return client_socket, client_addr
 
     def update_db(self, id, alarm1, alarm2):
-        date = datetime.datetime.now().strftime('%Y-%M-%d %H:%m')
-        querry = f'''insert or replace into station_status (station_id,
-                    last_date, alarm1, alarm2) values ({id},'{date}', {alarm1}, {alarm2})'''
+        date = datetime.datetime.now().strftime('%Y-%m-%d %H:%m')
+        parameter = (id, date, alarm1, alarm2)
+        print(
+            f'[Server] - Updating Client id Number {id} at Time: {date} - Alarm1: {alarm1} - Alarm2: {alarm2} ')
         try:
             cursor = self.conn.cursor()
-            cursor.execute(querry)
+            cursor.execute(
+                "insert or replace into station_status (station_id,last_date, alarm1, alarm2) values (?,?, ?, ?)",
+                parameter)
             self.conn.commit()
+            print('DB updated')
         except Exception as e:
             print(f'Exception: {e}')
 
     def get_db_status(self, id):
-        # TODO secure id
-        querry = f'''select * from station_status where station_id = {str(id)}'''
-        # querry = f'''select * from station_status'''
+        parameters = (str(id), )
         try:
             cur = self.conn.cursor()
-            cur.execute(querry)
-            # self.conn.commit()
+            cur.execute(
+                "select * from station_status where station_id = ?", parameters)
             result = cur.fetchone()
+            print(f'[Server] - Retriving alarm status to the Client id {id}')
+            # self.socket.send(str(result).encode())
+            return result
         except Exception as e:
             print(f'Exception: {e}')
-
-        print(result)
-        return result
 
     def process_data_client(self, data):
         data = data.decode()
@@ -70,35 +73,38 @@ class Server:
             if data['command'] == 'update':
                 data = data['data'].split()
                 self.update_db(data[0], data[1], data[2])
-        # TODO Have to check wich execption could be
+            elif data['command'] == 'retrive':
+                data = data['data'].split()
+                return self.get_db_status(data[0])
         except (ValueError, AttributeError, SyntaxError) as err:
-            print(f'Exception {err}')
             print(data)
-            pass
 
 
 if __name__ == '__main__':
     try:
         my_server = Server('localhost', 12121)
-        # my_server.get_db_status(2)
-        # my_server.update_db(613, 1, 1)
-        # my_server.get_db_status(613)
-        conn, addr = my_server.accept_connection()
+        client_list = []
+        inputs_sockets = [my_server.socket]
 
-        while True:
-            data = conn.recv(1024)
-            if data:
-                # print(f'Information from {conn} = {data.decode()}')
-                # my_server.socket.send()
-                conn.send('Proccesing your request'.encode())
-                my_server.proccess_data_client(data)
+        while inputs_sockets:
+            readable, _, _ = select.select(inputs_sockets, [], [])
 
-        # while True:
-        #     recv = conn.recv(1024).decode()
-        #     print(f'Server get this msg: {recv}')
-        #     # TODO send response to Client
-        #     if recv:
-        #         conn.send(b'Server Send from server.py')
+            for socket_readable in readable:
+                if socket_readable is my_server.socket:
+                    connection, client_address = my_server.socket.accept()
+                    connection.setblocking(0)
+                    inputs_sockets.append(connection)
+                else:
+                    try:
+                        data = socket_readable.recv(1024)
+                        if data:
+                            print(
+                                f'Information from {socket_readable} = {data.decode()}')
+                            result = my_server.process_data_client(data)
+                            socket_readable.send(str(result).encode())
+
+                    except ConnectionError as e:
+                        pass
 
     except KeyboardInterrupt:
         print('The Server is shutting down')

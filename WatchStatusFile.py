@@ -22,7 +22,6 @@ class WatchStatusFile(FileSystemEventHandler):
             print(f'The file {event.src_path} was {event.event_type}')
             valid_alarm_config, file_content = self.status_file_handler.check_file_validation()
             if valid_alarm_config:
-                # currently_alarm_status_from_file = self.client_connection.get_alarm_status_from_file()
                 if file_content != self.client_connection.alarm_status:
                     self.client_connection.update_alarm_status()
                     self.client_connection.update_server()

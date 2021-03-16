@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from os import path
+import ast
 
 
 class StatusFileHandler:
@@ -12,17 +13,33 @@ class StatusFileHandler:
 
     def create_file(self, recover=False):
         if recover:
-            get_data_from_db = input('Do you want to recover the status file? y or n')
+            get_data_from_db = input(
+                'Do you want to recover the status file? y or n : ')
             if (get_data_from_db.lower() == 'y'):
-                pass  # TODO Create a function to get from DB
+                db_result = self.client_connection.get_alarm_status_from_db(
+                    self.station_id)
+                print(db_result)
+                if db_result:
+                    try:
+                        data = ast.literal_eval(db_result)
+                        with open(self.file_name, 'w') as f:
+                            f.write(f'{self.station_id} {data[2]} {data[3]}')
+                    except (ValueError, AttributeError, SyntaxError) as err:
+                        pass
+                else:
+                    print("Something was wrong with the DB, I'll create a default file")
+                    with open(self.file_name, 'w') as f:
+                        f.write(f'{self.station_id} 0 0')
             else:
-                pass
+                print("Ok, Default file will be create")
+                with open(self.file_name, 'w') as f:
+                    f.write(f'{self.station_id} 0 0')
         elif path.isfile(self.file_name):
             print(
                 'Status File detected, if any alarm is not decleared the default is False!')
         else:
             print("We detect status file doesn't exist, I will create it for you :-)")
-            with open(self.file_name, 'w') as f:  # TODO Should I use w??? Get last update status from server
+            with open(self.file_name, 'w') as f:
                 f.write(f'{self.station_id} 0 0')
 
     def check_file_validation(self):
@@ -41,9 +58,6 @@ class StatusFileHandler:
                             print(ValueError)
                             print(f'''Error, the value in the column numnber: {index + 1} 
                             is not Integer, your input is {file_content[index]}''')
-                        # finally:
-                        #  somethink like ValueError, if ValueError, as... do something
-                        #     return False  # Should be a function to rewrite the status file 
                 else:
                     print('The File ID is not the same with client')
                     return False
