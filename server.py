@@ -86,6 +86,9 @@ class Server:
             elif data['command'] == 'retrieve':
                 data = data['data'].split()
                 return self.get_db_status(data[0])
+            else:
+                print('command not fount')
+                return False
         except (ValueError, AttributeError, SyntaxError) as err:
             print(data)
 
